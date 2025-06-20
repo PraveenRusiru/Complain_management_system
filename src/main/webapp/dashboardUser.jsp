@@ -305,7 +305,33 @@
             color: var(--gray);
             margin-bottom: 1.5rem;
         }
+        .profile-picture-container {
+            position: relative;
+            margin: 0 auto;
+            width: 150px;
+            height: 150px;
+        }
 
+        #profileImage {
+            object-fit: cover;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #profileImage:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #profileUpload {
+            display: none;
+        }
+
+        .profile-actions .btn {
+            border-radius: 8px;
+            padding: 0.375rem 0.75rem;
+        }
         .top-bar {
             background-color: white;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -803,6 +829,88 @@
         </div>
     </div>
 
+<!-- Add this modal to your existing code, preferably near the other modals -->
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="profileForm" action="<%=request.getContextPath()%>/updateProfile" method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <!-- Profile Picture Column -->
+                        <div class="col-md-4 text-center">
+                            <div class="profile-picture-container mb-4">
+                                <div class="position-relative d-inline-block">
+                                    <img id="profileImage" src="<%= session.getAttribute("profilePic") != null ? session.getAttribute("profilePic") : "https://ui-avatars.com/api/?name=" + session.getAttribute("userName") + "&background=4361ee&color=fff" %>"
+                                         class="rounded-circle shadow-sm" width="150" height="150" alt="Profile Picture">
+                                    <label for="profileUpload" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0"
+                                           style="width: 40px; height: 40px; line-height: 40px;">
+                                        <i class="bi bi-camera"></i>
+                                    </label>
+                                    <input type="file" id="profileUpload" name="profilePicture" accept="image/*" class="d-none">
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="removeProfilePic">
+                                    <i class="bi bi-trash"></i> Remove Photo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- User Details Column -->
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label class="form-label">Full Name</label>
+                                <input type="text" class="form-control" name="userName"
+                                       value="<%= session.getAttribute("userName") %>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" class="form-control" name="email"
+                                       value="<%= session.getAttribute("email") != null ? session.getAttribute("email") : "" %>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" name="phone"
+                                       value="<%= session.getAttribute("phone") != null ? session.getAttribute("phone") : "" %>">
+                            </div>
+
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Change Password</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Current Password</label>
+                                        <input type="password" class="form-control" name="currentPassword">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">New Password</label>
+                                        <input type="password" class="form-control" name="newPassword">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Confirm New Password</label>
+                                        <input type="password" class="form-control" name="confirmPassword">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Delete Complaint Modal (Keep your existing modal) -->
 <div class="modal fade" id="deleteComplaintModal" tabindex="-1">
     <div class="modal-dialog">
@@ -973,6 +1081,35 @@
                 });
             });
         });
+    });
+
+    // Profile picture upload preview
+    document.getElementById('profileUpload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('profileImage').src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Remove profile picture
+    document.getElementById('removeProfilePic').addEventListener('click', function() {
+        document.getElementById('profileImage').src = "https://ui-avatars.com/api/?name=<%= session.getAttribute("userName") %>&background=4361ee&color=fff";
+        document.getElementById('profileUpload').value = '';
+    });
+
+    // Form validation
+    document.getElementById('profileForm').addEventListener('submit', function(e) {
+        const newPassword = this.elements['newPassword'].value;
+        const confirmPassword = this.elements['confirmPassword'].value;
+
+        if (newPassword && newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert('New password and confirmation do not match!');
+        }
     });
 
     function clicked() {
